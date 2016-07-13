@@ -10,16 +10,17 @@ set rtp+=$HOME/.vim/bundle/Vundle.vim
 call vundle#begin()
 
 Plugin 'VundleVim/Vundle.vim'
+Plugin 'Shougo/neocomplete.vim'
 "Plugin 'scrooloose/syntastic'
 Plugin 'Yggdroot/indentLine'
-Plugin 'ervandew/supertab'
-Plugin 'jiangmiao/auto-pairs'
+Plugin 'adriaanzon/auto-pairs' " Has a number of bugfixes over the original at jiangmiao/auto-pairs
 Plugin 'itchyny/lightline.vim'
 Plugin 'airblade/vim-gitgutter'
 Plugin 'xolox/vim-misc' " We only need this for easytags
 Plugin 'xolox/vim-easytags'
 Plugin 'google/vim-searchindex'
 Plugin 'tpope/vim-eunuch'
+Plugin 'tpope/vim-commentary'
 
 Bundle 'tomasr/molokai'
 
@@ -27,6 +28,13 @@ call vundle#end()
 filetype plugin indent on
 
 " Plugin settings
+" NeoComplete
+let g:neocomplete#enable_at_startup = 1
+let g:neocomplete#enable_auto_delimiter = 1 " Auto-insert delimiters, such as / for filenames
+let g:neocomplete#enable_camel_case = 1
+inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
+inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<TAB>"
+
 " Syntastic
 let g:syntastic_quiet_messages = {"level": "warnings"}
 let g:syntastic_python_checkers = ['pylint']
@@ -38,6 +46,7 @@ let g:indentLine_faster = 1
 
 " auto-pairs
 let g:AutoPairsMultilineClose = 0
+let g:AutoPairsFlyMode = 1 " MultilineClose=0, FlyMode=1 => Only fly on the same line
 
 " lightline
 let g:lightline = {
