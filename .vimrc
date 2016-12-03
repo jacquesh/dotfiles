@@ -1,5 +1,5 @@
 " Fix the path so that we can find ~/.vim on windows
-if has('win32') || has('win64')
+if has('win32')
     set runtimepath=$HOME/.vim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,$HOME/.vim/after
 endif
 
@@ -11,16 +11,17 @@ call vundle#begin()
 
 Plugin 'VundleVim/Vundle.vim'
 Plugin 'Shougo/neocomplete.vim'
-"Plugin 'scrooloose/syntastic'
+Plugin 'rip-rip/clang_complete' " TODO: See about this, it doesn't appear to load the config that lets it know where the includes are
 Plugin 'Yggdroot/indentLine'
-Plugin 'adriaanzon/auto-pairs' " Has a number of bugfixes over the original at jiangmiao/auto-pairs
+"Plugin 'adriaanzon/auto-pairs' " Has a number of bugfixes over the original at jiangmiao/auto-pairs
+Plugin 'jiangmiao/auto-pairs' " We'll try this for a while since adriaanzon deleted his repo - maybe jiangmiao's version is fixed now
 Plugin 'itchyny/lightline.vim'
 Plugin 'airblade/vim-gitgutter'
-Plugin 'xolox/vim-misc' " We only need this for easytags
-Plugin 'xolox/vim-easytags'
 Plugin 'google/vim-searchindex'
 Plugin 'tpope/vim-eunuch'
-Plugin 'tpope/vim-commentary'
+Plugin 'tpope/vim-sensible'
+Plugin 'majutsushi/tagbar'
+Plugin 'vimwiki/vimwiki'
 
 Bundle 'tomasr/molokai'
 
@@ -32,21 +33,37 @@ filetype plugin indent on
 let g:neocomplete#enable_at_startup = 1
 let g:neocomplete#enable_auto_delimiter = 1 " Auto-insert delimiters, such as / for filenames
 let g:neocomplete#enable_camel_case = 1
+let g:neocomplete#sources#syntax#min_keyword_length = 3
 inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
 inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<TAB>"
+if !exists('g:neocomplete#force_omni_input_patterns')
+    let g:neocomplete#force_omni_input_patterns = {}
+endif
+let g:neocomplete#force_omni_input_patterns.c =
+      \ '[^.[:digit:] *\t]\%(\.\|->\)\w*'
+let g:neocomplete#force_omni_input_patterns.cpp =
+      \ '[^.[:digit:] *\t]\%(\.\|->\)\w*\|\h\w*::\w*'
+let g:neocomplete#force_omni_input_patterns.objc =
+      \ '\[\h\w*\s\h\?\|\h\w*\%(\.\|->\)'
+let g:neocomplete#force_omni_input_patterns.objcpp =
+      \ '\[\h\w*\s\h\?\|\h\w*\%(\.\|->\)\|\h\w*::\w*'
 
-" Syntastic
-let g:syntastic_quiet_messages = {"level": "warnings"}
-let g:syntastic_python_checkers = ['pylint']
-let g:syntastic_cpp_checkers = ['clang_check']
-let g:syntastic_cpp_clang_check_config_file = '~/.vim/clang_check_args.txt'
+" Clang_Complete
+let g:clang_complete_auto = 0
+let g:clang_auto_select = 0
+let g:clang_omnicppcomplete_compliance = 0
+let g:clang_make_default_keymappings = 0
+let g:clang_use_library = 1
+if has('win32')
+    let g:clang_library_path='C:\Program Files\LLVM\bin'
+endif
 
 " indentLine
 let g:indentLine_faster = 1
 
 " auto-pairs
 let g:AutoPairsMultilineClose = 0
-let g:AutoPairsFlyMode = 1 " MultilineClose=0, FlyMode=1 => Only fly on the same line
+let g:AutoPairsCenterLine = 0
 
 " lightline
 let g:lightline = {
@@ -70,7 +87,7 @@ set backspace=indent,eol,start "Equivalent to: set backspace=2
 " Indentation
 set autoindent " Maintain current indent when starting a new line
 set smartindent " Increase indentation after opening a new block ({} or keywords)
-set cindent " Use C-style indentation rules TODO: Configure this properly
+set cindent " Use C-style indentation rules
 set tabstop=4 " Number spaces that a tab is equivalent to
 set shiftwidth=4 " Number of spaces used for each autoindent level
 set expandtab " Insert spaces instead of a tab character when pressing tab
@@ -82,18 +99,21 @@ set number " Show line numbers at the start of each line
 set numberwidth=4 " Use at least 4 columns to show the line number
 set wildmenu " Show the autocomplete options with pressing tab
 set ruler " Show text in the bottom-right corner indicating the current line number, column and relative position in the file (percent)
-match Error "\s\+$" " Highlight all trailing whitespace
 set linebreak " Wrap lines at an intelligent place instead of just at the last character that fits onto the screen
 set breakindent " Indent the start of wrapped lines to the same level as their original linestart
 set breakindentopt:shift:2 " Further indent the start of the wrapped line to emphasize the wrap
-
 set cursorline " Highlight the line that the cursor is on
+set completeopt-=preview " Don't open a preview window with more info about completion options
+set listchars=tab:»·,trail:·,nbsp:? " Set which characters to render in place of tabs/trailing spaces
+set list " Enable rendering of listchars in place of their corresponding invisible characters
+set showbreak=- " TODO: Also get a nicer character here, wraithy uses a cool unicode arrow
 
 " Misc
 set scrolloff=4 " Ensure that we never scroll to the last line visible onscreen
 set clipboard=unnamed " Yank/Put with the unnamed (system) register by default
 set encoding=utf-8 " Use UTF-8 for all character encoding in vim
 set ttyfast " Send more characters to be drawn because we have a fast tty connection. Renders faster
+set fileformats=unix,dos " Prefer unix line-endings for new buffers, this is default on unix systems
 
 " Split Setup
 nnoremap <C-j> <C-w>j
@@ -109,6 +129,10 @@ nnoremap <tab> <C-w><C-w>
 " Better indenting in visual mode
 vnoremap <tab> > gv
 vnoremap <S-tab> < gv
+
+" More intuitive vertical movement on wrapped lines
+nmap j gj
+nmap k gk
 
 " Learn to stop using arrow keys to move around
 nnoremap <Left> :echoe "Use h"<CR>

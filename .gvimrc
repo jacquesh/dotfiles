@@ -6,5 +6,3 @@ set guioptions-=T "Remove the toolbar
 set guioptions-=r "Remove the right-hand scroll bar
 set guioptions-=l "Remove the left-hand scroll bar
 set guioptions-=L "Remove the left-hand scroll bar for vertical splits
-
-set fileformats=unix,dos " Prefer unix line-endings for new files, this is default on unix systems
