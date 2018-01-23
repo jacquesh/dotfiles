@@ -10,18 +10,30 @@ set rtp+=$HOME/.vim/bundle/Vundle.vim
 call vundle#begin()
 
 Plugin 'VundleVim/Vundle.vim'
-Plugin 'Shougo/neocomplete.vim'
-Plugin 'rip-rip/clang_complete' " TODO: See about this, it doesn't appear to load the config that lets it know where the includes are
-Plugin 'Yggdroot/indentLine'
-"Plugin 'adriaanzon/auto-pairs' " Has a number of bugfixes over the original at jiangmiao/auto-pairs
-Plugin 'jiangmiao/auto-pairs' " We'll try this for a while since adriaanzon deleted his repo - maybe jiangmiao's version is fixed now
+if has('nvim')
+    Plugin 'Shougo/deoplete.nvim'
+else
+    Plugin 'Shougo/neocomplete.vim'
+endif
+"Plugin 'rip-rip/clang_complete' " TODO: See about this, it doesn't appear to load the config that lets it know where the includes are
+"Plugin 'SirVer/ultisnips' " TODO: This interferes with <tab> for completion
+Plugin 'ctrlpvim/ctrlp.vim' " Fuzzy file & buffer finding
+Plugin 'Yggdroot/indentLine' " Visible indentation guides
+Plugin 'jiangmiao/auto-pairs'
 Plugin 'itchyny/lightline.vim'
 Plugin 'airblade/vim-gitgutter'
-Plugin 'google/vim-searchindex'
+Plugin 'google/vim-searchindex' " Specify the index of a search match in the status bar (e.g [2/5])
 Plugin 'tpope/vim-eunuch'
+Plugin 'tpope/vim-fugitive'
 Plugin 'tpope/vim-sensible'
+Plugin 'tpope/vim-surround' " Easily change characters surrounding a text object (e.g { to [)
+Plugin 'tpope/vim-repeat' " Support using . to repeat command combinations defined by plugins
 Plugin 'majutsushi/tagbar'
 Plugin 'vimwiki/vimwiki'
+Plugin 'tikhomirov/vim-glsl' " GLSL Syntax highlighting
+Plugin 'alvan/vim-closetag' " HTML tag auto-closing
+Plugin 'fatih/vim-go'
+Plugin 'scrooloose/nerdtree'
 
 Bundle 'tomasr/molokai'
 
@@ -48,6 +60,9 @@ let g:neocomplete#force_omni_input_patterns.objc =
 let g:neocomplete#force_omni_input_patterns.objcpp =
       \ '\[\h\w*\s\h\?\|\h\w*\%(\.\|->\)\|\h\w*::\w*'
 
+" deoplete
+let g:deoplete#enable_at_startup = 1
+
 " Clang_Complete
 let g:clang_complete_auto = 0
 let g:clang_auto_select = 0
@@ -73,8 +88,10 @@ let g:lightline = {
 " vim-gitgutter
 let g:gitgutter_map_keys = 0
 
-" vim-easytags
-let g:easytags_async = 1
+" CtrlP
+let g:ctrlp_user_command = 'rg --maxdepth 15 -F --files %s'
+let g:ctrlp_use_caching = 0
+let g:ctrlp_map = '<c-p>'
 
 " Colors
 syntax enable " Enable vim's syntax highlighting
@@ -93,6 +110,9 @@ set shiftwidth=4 " Number of spaces used for each autoindent level
 set expandtab " Insert spaces instead of a tab character when pressing tab
 set smarttab " Backspace removes <shiftwidth>-many characters
 
+" Filetype-specific Indentation
+au FileType html,js setlocal shiftwidth=2 tabstop=2
+
 " UI
 set laststatus=2 " Always show the status line, even with only 1 window
 set number " Show line numbers at the start of each line
@@ -104,12 +124,14 @@ set breakindent " Indent the start of wrapped lines to the same level as their o
 set breakindentopt:shift:2 " Further indent the start of the wrapped line to emphasize the wrap
 set cursorline " Highlight the line that the cursor is on
 set completeopt-=preview " Don't open a preview window with more info about completion options
-set listchars=tab:»·,trail:·,nbsp:? " Set which characters to render in place of tabs/trailing spaces
+set listchars=tab:»\ ,trail:·,nbsp:?,extends:>,precedes:< " Set which characters to render in place of tabs/trailing spaces
 set list " Enable rendering of listchars in place of their corresponding invisible characters
 set showbreak=- " TODO: Also get a nicer character here, wraithy uses a cool unicode arrow
 
 " Misc
 set scrolloff=4 " Ensure that we never scroll to the last line visible onscreen
+set sidescrolloff=1 " Ensure that we can scroll to the last column visible on the screen
+set sidescroll=1 " When moving off the screen to the right, scroll sideways by 1 column at a time
 set clipboard=unnamed " Yank/Put with the unnamed (system) register by default
 set encoding=utf-8 " Use UTF-8 for all character encoding in vim
 set ttyfast " Send more characters to be drawn because we have a fast tty connection. Renders faster
@@ -145,3 +167,7 @@ set incsearch " Highlight a search match as the search term is being entered
 set hlsearch " Highlight all search results. enter :noh to clear highlight
 set ignorecase  " Ignore case in search strings
 set smartcase " Disable case-insensitivity if the search string contains upper-case characters
+if has('nvim')
+    set inccommand=nosplit
+else
+endif
