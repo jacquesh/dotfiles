@@ -124,15 +124,20 @@ set breakindent " Indent the start of wrapped lines to the same level as their o
 set breakindentopt:shift:2 " Further indent the start of the wrapped line to emphasize the wrap
 set cursorline " Highlight the line that the cursor is on
 set completeopt-=preview " Don't open a preview window with more info about completion options
-set listchars=tab:�\ ,trail:�,nbsp:?,extends:>,precedes:< " Set which characters to render in place of tabs/trailing spaces
+set listchars=tab:»\ ,trail:·,nbsp:·,extends:>,precedes:< " Set which characters to render in place of tabs/trailing spaces
 set list " Enable rendering of listchars in place of their corresponding invisible characters
-set showbreak=- " TODO: Also get a nicer character here, wraithy uses a cool unicode arrow
+set nowrap " Do not wrap lines when they extend past the edge of the visible region
+set showbreak=↪\  " The characters to display at the start of the new line when wrapping
 
 " Misc
 set scrolloff=4 " Ensure that we never scroll to the last line visible onscreen
 set sidescrolloff=1 " Ensure that we can scroll to the last column visible on the screen
 set sidescroll=1 " When moving off the screen to the right, scroll sideways by 1 column at a time
-set clipboard=unnamed " Yank/Put with the unnamed (system) register by default
+if has('nvim')
+    set clipboard=unnamedplus " Yank/Put with the unnamed (system) register by default
+else
+    set clipboard=unnamed " Yank/Put with the unnamed (system) register by default
+endif
 set encoding=utf-8 " Use UTF-8 for all character encoding in vim
 set ttyfast " Send more characters to be drawn because we have a fast tty connection. Renders faster
 set fileformats=unix,dos " Prefer unix line-endings for new buffers, this is default on unix systems
@@ -168,6 +173,13 @@ set hlsearch " Highlight all search results. enter :noh to clear highlight
 set ignorecase  " Ignore case in search strings
 set smartcase " Disable case-insensitivity if the search string contains upper-case characters
 if has('nvim')
-    set inccommand=nosplit
-else
+    set inccommand=nosplit " Display results of commands (such as substitute) incrementally while typing them, without a separate preview window
 endif
+
+if has('nvim')
+    set guifont=Consolas:h12 " Set the font and font size (height)
+endif
+
+nnoremap <C-c> :cexpr system('compile.bat')<CR>
+
+
