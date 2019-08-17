@@ -7,11 +7,9 @@ if has('win32') || has('win64')
     endif
 endif
 
-
 " =======
 " Plugins
 " =======
-
 
 if has('nvim')
     call plug#begin('~/.config/nvim/plugged')
@@ -31,11 +29,13 @@ Plug 'jiangmiao/auto-pairs' " Insert & delete pairs of characters in pairs (brac
 Plug 'junegunn/gv.vim'
 Plug 'machakann/vim-highlightedyank' " Temporarily highlight the yanked text when yanking
 Plug 'majutsushi/tagbar'
+" TODO: This currently has a bug whereby the warning icons don't go away after I fix the warnings Plug 'maximbaz/lightline-ale'
 Plug 'OmniSharp/omnisharp-vim'
 Plug 'OrangeT/vim-csharp'
 Plug 'rr-/vim-hexdec' " Convert numbers between decimal and hexadecimal inside vim
 Plug 'rust-lang/rust.vim' " Highlighting, formatting and filetype for the Rust language
 Plug 'scrooloose/nerdtree' " A better file explorer within vim
+" TODO: Get this running once we have autocomplete Plug 'shougo/echodoc.vim' " Display function signatures from completions on the command line.
 Plug 'tikhomirov/vim-glsl' " Syntax highlighting for GLSL
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-dispatch' " Asynchronous task execution in vim
@@ -43,7 +43,7 @@ Plug 'tpope/vim-eunuch'
 Plug 'tpope/vim-fugitive' " Wrapper for many git commands (commit, browse, blame etc)
 Plug 'tpope/vim-repeat' " Extend the . operator to support actions provided by certain plugins
 if !has('nvim')
-    Plug 'tpope/vim-sensible' " Unnecessary in neovim (this is default)
+    Plug 'tpope/vim-sensible' " Set a bunch of options to better default values. Unnecessary in neovim (this is built-in there)
 endif
 Plug 'tpope/vim-surround' " Add a 'surround' noun so that you can refer to surrounding quotes, braces, xmltags etc
 Plug 'tpope/vim-vinegar'
@@ -54,16 +54,26 @@ Plug 'w0rp/ale' " Asynchronous Linting Engine
 Plug 'Yggdroot/indentLine' " Show indent guides (e.g a pipe every 4 consecutive spaces)
 
 if has('nvim')
-    "Plug 'Shougo/deoplete.nvim', {'do': ':UpdateRemotePlugins'}
-    Plug 'roxma/nvim-yarp' | Plug 'ncm2/ncm2' " TODO: Get this working?
-    Plug 'ncm2/ncm2-path'
+    "Plug 'roxma/nvim-yarp' | Plug 'ncm2/ncm2' " TODO: Get this working?
+    "Plug 'ncm2/ncm2-path'
     "Plug 'ncm2/ncm2-snippet' " TODO
+    "Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+    Plug 'prabirshrestha/asyncomplete.vim'
+
+    " GUI
+    " TODO:
+    " https://github.com/equalsraf/neovim-qt/wiki
+    " https://github.com/equalsraf/neovim-qt/issues/506
+    " :h nvim-gui-shim
+    "Plug 'equalsraf/neovim-gui-shim' " Necessary for neovim-qt to understand configuration from this file
+    "GuiTabline 0
+    "GuiPopupMenu 0
 else
-    Plug 'Shougo/neocomplete.vim'
+    "Plug 'Shougo/neocomplete.vim'
 endif
 
 Plug 'tomasr/molokai'
-Plug 'joshdick/onedark.vim' " TODO Actually try this out properly
+Plug 'joshdick/onedark.vim'
 
 call plug#end()
 filetype plugin indent on
@@ -72,18 +82,20 @@ filetype plugin indent on
 
 if has('nvim')
     " ncm2
-    autocmd BufEnter * call ncm2#enable_for_buffer()
-    set completeopt=noinsert,menuone,noselect
-    au User Ncm2Plugin call ncm2#register_source({
-                \ 'name': 'cs',
-                \ 'priority': 9,
-                \ 'subscope_enable': 1,
-                \ 'scope': ['cs'],
-                \ 'mark': 'cs',
-                \ 'word_pattern': '[\w\-]+',
-                \ 'complete_pattern': ':\s*',
-                \ 'on_complete': ['ncm2#on_complete#omni', 'OmniSharp#Complete'],
-                \ })
+    "autocmd BufEnter * call ncm2#enable_for_buffer()
+    "set completeopt=noinsert,menuone,noselect
+    "au User Ncm2Plugin call ncm2#register_source({
+    "            \ 'name': 'cs',
+    "            \ 'priority': 9,
+    "            \ 'subscope_enable': 1,
+    "            \ 'scope': ['cs'],
+    "            \ 'mark': 'cs',
+    "            \ 'word_pattern': '[\w\-]+',
+    "            \ 'complete_pattern': ':\s*',
+    "            \ 'on_complete': ['ncm2#on_complete#omni', 'OmniSharp#Complete'],
+    "            \ })
+    " deoplete
+    let g:deoplete#enable_at_startup = 1
 else
     " NeoComplete
     let g:neocomplete#enable_at_startup = 1
@@ -117,9 +129,10 @@ endif
 
 "ALE
 let g:ale_linters = {
-			\ 'cs': ['OmniSharp'],
-			\ 'javascript': ['eslint']
-			\ }
+            \ 'cs': ['OmniSharp'],
+            \ 'javascript': ['eslint'],
+            \ 'html': []
+            \ }
 let g:ale_echo_msg_format = '[%severity%-%linter%] %s'
 let g:ale_sign_error = 'X'
 let g:ale_sign_warning = '!'
@@ -128,17 +141,12 @@ nnoremap gln :ALENext<CR>
 nnoremap glp :ALEPrevious<CR>
 
 " OmniSharp
-let g:OmniSharp_timeout = 10 " Timeout to wait for the server (in seconds)
+let g:OmniSharp_server_path=$HOME . '\.omnisharp\omnisharp-roslyn\OmniSharp.exe'
+let g:OmniSharp_server_stdio = 1
+let g:OmniSharp_loglevel = 'debug'
+let g:OmniSharp_timeout = 5 " Timeout to wait for the server (in seconds)
 augroup omnisharp_commands
     autocmd!
-    " Synchronous build (blocks Vim)
-    autocmd FileType cs nnoremap <F6> :OmniSharpBuild<CR>
-    " Builds can also run asynchronously with vim-dispatch installed
-    autocmd FileType cs nnoremap <leader>b :OmniSharpBuildAsync<CR>
-
-    "show type information automatically when the cursor stops moving
-    autocmd CursorHold *.cs call OmniSharp#TypeLookupWithoutDocumentation()
-
     "The following commands are contextual, based on the current cursor position.
     autocmd FileType cs nnoremap gd :OmniSharpGotoDefinition<CR>
     autocmd FileType cs nnoremap <leader>fi :OmniSharpFindImplementations<CR>
@@ -149,12 +157,9 @@ augroup omnisharp_commands
     autocmd FileType cs nnoremap <leader>tt :OmniSharpTypeLookup<CR>
     autocmd FileType cs nnoremap <leader>dc :OmniSharpDocumentation<CR>
 augroup END
-set updatetime=1000 " this setting controls how long to wait (in ms) before fetching type / symbol information.
-set cmdheight=1 " Remove 'Press Enter to continue' message when type information is longer than one line.
+"set cmdheight=1 " Remove 'Press Enter to continue' message when type information is longer than one line.
 " Force OmniSharp to reload the solution. Useful when switching branches etc.
 nnoremap <leader>cf :OmniSharpCodeFormat<CR>
-" Add syntax highlighting for types and interfaces
-nnoremap <leader>th :OmniSharpHighlightTypes<CR>
 " Enable snippet completion, requires completeopt-=preview
 "let g:OmniSharp_want_snippet=1
 
@@ -171,7 +176,21 @@ let g:AutoPairsCenterLine = 0
 " lightline
 let g:lightline = {
     \ 'colorscheme': 'powerline',
+    \ 'component_type': {
+    \   'linter_checking': 'left',
+    \   'linter_warnings': 'warning',
+    \   'linter_errors': 'error',
+    \   'linter_ok': 'left',
+    \ },
+    \ 'component_expand': {
+    \   'linter_checking': 'lightline#ale#checking',
+    \   'linter_warnings': 'lightline#ale#warnings',
+    \   'linter_errors': 'lightline#ale#errors',
+    \   'linter_ok': 'lightline#ale#ok',
+    \ },
     \ }
+" TODO: Fix this so that the ALE stats update as we fix the linter errors. The _linter* options above are all just there fore ALE stats, without lightline-ale they're not doing anything. They should be removed or fixed.
+" let g:lightline.active.right = { 'right': [  [ 'lineinfo' ], [ 'percent' ], [ 'fileformat', 'fileencoding', 'filetype' ], [ 'linter_checking', 'linter_errors', 'linter_warnings', 'linter_ok' ]], }
 
 " vim-gitgutter
 let g:gitgutter_map_keys = 0
@@ -204,7 +223,6 @@ let NERDTreeDirArrowCollapsible = "▼"
 
 " Colors
 syntax enable " Enable vim's syntax highlighting
-"colorscheme molokai
 colorscheme onedark
 set t_Co=256
 
@@ -275,10 +293,20 @@ if has('nvim')
 endif
 
 " Persistent Undo
-set undofile
-set undolevels=1000
-set undoreload=10000
-set undodir=~/.vim/undo
+set undofile " Persist undo history to disk when writing a buffer to a file (allows you to close and re-open a file and keep the undo history)
+set undolevels=1000 " The maximum number of changes that can be undone at one time
+set undoreload=10000 " Save the whole buffer for undo when reloading it if the number of lines in the buffer is less than this option's value
+set undodir^=~/.vim/undo// " Write undo files to a specific directory by default. The trailing // instructs vim to use each file's full path in the undo dir (to prevent ambiguity between files with the same name in different directories). The ^= prepends the value.
+
+" Swap files
+set swapfile " Write swap files for each buffer, which protects against crash/power loss between writes
+set directory^=~/.vim/swap// " Write swap files to a specific directory by default
+
+" Backups
+set writebackup " Make a backup before overwriting a file that is removed after successful write. Prevents data loss if we crash during a write
+set nobackup " Do not persist backup files after a successful write
+set backupcopy=auto " Use whatever the platform-specific best scheme is for making and using backup files
+set backupdir^=~/.vim/backup// " Write backups to a specific directory by default
 
 " Set defaults that neovim has built-in
 if !has('nvim')
@@ -295,8 +323,7 @@ if !has('nvim')
     set smarttab " Backspace removes <shiftwidth>-many characters
 endif
 
+" TODO
 autocmd FileType javascript setlocal shiftwidth=2 tabstop=2
 nnoremap <C-c> :!dotnet build<CR>
-
-
 
