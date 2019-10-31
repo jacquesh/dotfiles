@@ -19,7 +19,6 @@ endif
 Plug 'airblade/vim-gitgutter' " Show a gutter with git changes next to the line numbers
 Plug 'alvan/vim-closetag' " HTML & XML tag auto-closing
 Plug 'ctrlpvim/ctrlp.vim' " Fuzzy-find files and buffers
-Plug 'easymotion/vim-easymotion' " TODO: Try this out properly
 Plug 'elzr/vim-json' " Better JSON highlighting
 Plug 'fatih/vim-go' " Golang development helper (highlighting, formatting, source navigation etc)
 Plug 'godlygeek/tabular' " Formatting text into tables easily
@@ -27,6 +26,7 @@ Plug 'google/vim-searchindex' " Show a count of the total and current results (e
 Plug 'itchyny/lightline.vim' " A nicer status bar, colour-coded by mode
 Plug 'jiangmiao/auto-pairs' " Insert & delete pairs of characters in pairs (brackets, quotes etc)
 Plug 'junegunn/gv.vim'
+Plug 'justinmk/vim-sneak' " Adds a more powerful f/t-style command that jumps to the next instance of a 2-character sequence
 Plug 'machakann/vim-highlightedyank' " Temporarily highlight the yanked text when yanking
 Plug 'majutsushi/tagbar'
 " TODO: This currently has a bug whereby the warning icons don't go away after I fix the warnings Plug 'maximbaz/lightline-ale'
