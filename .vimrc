@@ -44,14 +44,14 @@ Plug 'tpope/vim-repeat' " Extend the . operator to support actions provided by c
 if !has('nvim')
     Plug 'tpope/vim-sensible' " Set a bunch of options to better default values. Unnecessary in neovim (this is built-in there)
 endif
-Plug 'tpope/vim-surround' " Add a 'surround' noun so that you can refer to surrounding quotes, braces, xmltags etc
+Plug 'tpope/vim-surround' " Add a 'surround' noun so that you can refer to surrounding quotes, braces, XML tags etc
 Plug 'tpope/vim-vinegar'
 Plug 'vim-scripts/CursorLineCurrentWindow' " Toggles highlighting of the cursor line so it is only active on the focussed buffer
 Plug 'vim-scripts/Gundo'
 Plug 'vimwiki/vimwiki' " An easy-to-use wiki from the comfort of your own editor
 Plug 'w0rp/ale' " Asynchronous Linting Engine
 Plug 'Yggdroot/indentLine' " Show indent guides (e.g a pipe every 4 consecutive spaces)
-Plug 'ziglang/zig.vim'
+Plug 'ziglang/zig.vim' " Auto-formatting, syntax highlighting etc for the Zig language
 
 if has('nvim')
     "Plug 'roxma/nvim-yarp' | Plug 'ncm2/ncm2' " TODO: Get this working?
@@ -189,41 +189,41 @@ colorscheme onedark
 set t_Co=256
 
 " Indentation
-set smartindent " Increase indentation after opening a new block ({} or keywords)
 set cindent " Use C-style indentation rules TODO: Configure this properly
-set tabstop=4 " Number spaces that a tab is equivalent to
-set shiftwidth=4 " Number of spaces used for each autoindent level
 set expandtab " Insert a space characters when pressing tab (not a tab)
+set shiftwidth=4 " Number of spaces used for each autoindent level
+set smartindent " Increase indentation after opening a new block ({} or keywords)
+set tabstop=4 " Number spaces that a tab is equivalent to
 
 " UI
-set encoding=utf-8
-set number " Show line numbers at the start of each line
-set numberwidth=4 " Use at least 4 columns to show the line number
-set linebreak " Wrap lines at an intelligent place instead of just at the last character that fits onto the screen
 set breakindent " Indent the start of wrapped lines to the same level as their original linestart
 set breakindentopt:shift:2 " Further indent the start of the wrapped line to emphasize the wrap
-set cursorline " Highlight the line that the cursor is on
 set completeopt-=preview " Don't open a preview window with more info about completion options
-set listchars=tab:┆\·,trail:·,nbsp:?,extends:»,precedes:« " Set which characters to render in place of tabs/trailing spaces
-set list " Enable rendering of listchars in place of their corresponding invisible characters
-set nowrap " Don't wrap long lines (zH and zL to move horizontally)
-set showbreak=↪\  " The characters to display at the start of the new line when wrapping
-set mouse=a " Enable mouse-usage in all modes
+set cursorline " Highlight the line that the cursor is on
+set encoding=utf-8
 set lazyredraw " Do not redraw between every action when executing macros or other non-typed commands
+set linebreak " Wrap lines at an intelligent place instead of just at the last character that fits onto the screen
+set list " Enable rendering of listchars in place of their corresponding invisible characters
+set listchars=tab:┆\·,trail:·,nbsp:?,extends:»,precedes:« " Set which characters to render in place of tabs/trailing spaces
+set mouse=a " Enable mouse-usage in all modes
+set nowrap " Don't wrap long lines (zH and zL to move horizontally)
+set number " Show line numbers at the start of each line
+set numberwidth=4 " Use at least 4 columns to show the line number
+set showbreak=↪\  " The characters to display at the start of the new line when wrapping
 
 " Misc
-set scrolloff=4 " Ensure that we never scroll to the last line visible onscreen
-set sidescrolloff=4 " Ensure that we never scroll to the last column visible onscreen
-set sidescroll=1 " Scroll sideways by only 1 column at a time when the cursor moves to close to the edge of the screen
 if has('nvim')
     set clipboard=unnamedplus " Yank/Put with the unnamed (system) register by default
 else
     set clipboard=unnamed " Yank/Put with the unnamed (system) register by default
 endif
+set diffopt+=vertical " Open diffs in a vertical (rather than horizontal) split
 set encoding=utf-8 " Use UTF-8 for all character encoding in vim
 set nofixeol " Don't insert missing newlines at EOF on save
+set scrolloff=4 " Ensure that we never scroll to the last line visible onscreen
+set sidescroll=1 " Scroll sideways by only 1 column at a time when the cursor moves to close to the edge of the screen
+set sidescrolloff=4 " Ensure that we never scroll to the last column visible onscreen
 set spell " Enable spellcheck
-set diffopt+=vertical " Open diffs in a vertical (rather than horizontal) split
 
 " Split Setup
 nnoremap <C-j> <C-w>j
@@ -256,32 +256,32 @@ if has('nvim')
 endif
 
 " Persistent Undo
+set undodir^=~/.vim/undo// " Write undo files to a specific directory by default. The trailing // instructs vim to use each file's full path in the undo dir (to prevent ambiguity between files with the same name in different directories). The ^= prepends the value.
 set undofile " Persist undo history to disk when writing a buffer to a file (allows you to close and re-open a file and keep the undo history)
 set undolevels=1000 " The maximum number of changes that can be undone at one time
 set undoreload=10000 " Save the whole buffer for undo when reloading it if the number of lines in the buffer is less than this option's value
-set undodir^=~/.vim/undo// " Write undo files to a specific directory by default. The trailing // instructs vim to use each file's full path in the undo dir (to prevent ambiguity between files with the same name in different directories). The ^= prepends the value.
 
 " Swap files
-set swapfile " Write swap files for each buffer, which protects against crash/power loss between writes
 set directory^=~/.vim/swap// " Write swap files to a specific directory by default
+set swapfile " Write swap files for each buffer, which protects against crash/power loss between writes
 
 " Backups
-set writebackup " Make a backup before overwriting a file that is removed after successful write. Prevents data loss if we crash during a write
-set nobackup " Do not persist backup files after a successful write
 set backupcopy=auto " Use whatever the platform-specific best scheme is for making and using backup files
 set backupdir^=~/.vim/backup// " Write backups to a specific directory by default
+set nobackup " Do not persist backup files after a successful write
+set writebackup " Make a backup before overwriting a file that is removed after successful write. Prevents data loss if we crash during a write
 
 " Set defaults that neovim has built-in
 if !has('nvim')
     set autoindent " Maintain current indent when starting a new line
-    set wildmenu " Show the autocomplete options with pressing tab
-    set ruler " Show text in the bottom-right corner indicating the current line number, column and relative position in the file (percent)
-    set laststatus=2 " Always show the status line, even with only 1 window
-    set incsearch " Highlight a search match as the search term is being entered
-    set hlsearch " Highlight all search results. enter :noh to clear highlight
-    set ttyfast " Send more characters to be drawn because we have a fast tty connection. Renders faster
     set backspace=indent,eol,start " Allow backspace to remove newline and auto-indent whitespace. Equivalent to: set backspace=2
+    set hlsearch " Highlight all search results. enter :noh to clear highlight
+    set incsearch " Highlight a search match as the search term is being entered
+    set laststatus=2 " Always show the status line, even with only 1 window
+    set ruler " Show text in the bottom-right corner indicating the current line number, column and relative position in the file (percent)
     set smarttab " Backspace removes <shiftwidth>-many characters
+    set ttyfast " Send more characters to be drawn because we have a fast tty connection. Renders faster
+    set wildmenu " Show the autocomplete options with pressing tab
 endif
 
 " File-type-specific settings overrides
