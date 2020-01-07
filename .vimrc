@@ -30,7 +30,6 @@ Plug 'justinmk/vim-sneak' " Adds a more powerful f/t-style command that jumps to
 Plug 'machakann/vim-highlightedyank' " Temporarily highlight the yanked text when yanking
 Plug 'majutsushi/tagbar'
 " TODO: This currently has a bug whereby the warning icons don't go away after I fix the warnings Plug 'maximbaz/lightline-ale'
-Plug 'OmniSharp/omnisharp-vim'
 Plug 'OrangeT/vim-csharp'
 Plug 'rr-/vim-hexdec' " Convert numbers between decimal and hexadecimal inside vim
 Plug 'rust-lang/rust.vim' " Highlighting, formatting and filetype for the Rust language
@@ -52,6 +51,7 @@ Plug 'vim-scripts/Gundo'
 Plug 'vimwiki/vimwiki' " An easy-to-use wiki from the comfort of your own editor
 Plug 'w0rp/ale' " Asynchronous Linting Engine
 Plug 'Yggdroot/indentLine' " Show indent guides (e.g a pipe every 4 consecutive spaces)
+Plug 'ziglang/zig.vim'
 
 if has('nvim')
     "Plug 'roxma/nvim-yarp' | Plug 'ncm2/ncm2' " TODO: Get this working?
@@ -81,19 +81,6 @@ filetype plugin indent on
 " Plugin settings
 
 if has('nvim')
-    " ncm2
-    "autocmd BufEnter * call ncm2#enable_for_buffer()
-    "set completeopt=noinsert,menuone,noselect
-    "au User Ncm2Plugin call ncm2#register_source({
-    "            \ 'name': 'cs',
-    "            \ 'priority': 9,
-    "            \ 'subscope_enable': 1,
-    "            \ 'scope': ['cs'],
-    "            \ 'mark': 'cs',
-    "            \ 'word_pattern': '[\w\-]+',
-    "            \ 'complete_pattern': ':\s*',
-    "            \ 'on_complete': ['ncm2#on_complete#omni', 'OmniSharp#Complete'],
-    "            \ })
     " deoplete
     let g:deoplete#enable_at_startup = 1
 else
@@ -116,7 +103,6 @@ else
     autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
     autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
     autocmd FileType xml setlocal omnifunc=xmlcomplete#CompleteTags
-    autocmd FileType cs setlocal omnifunc=OmniSharp#Complete
     if !exists('g:neocomplete#sources#omni#input_patterns')
         let g:neocomplete#sources#omni#input_patterns = {}
     endif
@@ -129,7 +115,6 @@ endif
 
 "ALE
 let g:ale_linters = {
-            \ 'cs': ['OmniSharp'],
             \ 'javascript': ['eslint'],
             \ 'html': []
             \ }
@@ -139,29 +124,6 @@ let g:ale_sign_warning = '!'
 let g:ale_sign_info = 'i'
 nnoremap gln :ALENext<CR>
 nnoremap glp :ALEPrevious<CR>
-
-" OmniSharp
-let g:OmniSharp_server_path=$HOME . '\.omnisharp\omnisharp-roslyn\OmniSharp.exe'
-let g:OmniSharp_server_stdio = 1
-let g:OmniSharp_loglevel = 'debug'
-let g:OmniSharp_timeout = 5 " Timeout to wait for the server (in seconds)
-augroup omnisharp_commands
-    autocmd!
-    "The following commands are contextual, based on the current cursor position.
-    autocmd FileType cs nnoremap gd :OmniSharpGotoDefinition<CR>
-    autocmd FileType cs nnoremap <leader>fi :OmniSharpFindImplementations<CR>
-    autocmd FileType cs nnoremap <leader>fs :OmniSharpFindSymbol<CR>
-    autocmd FileType cs nnoremap <leader>fu :OmniSharpFindUsages<CR>
-    "finds members in the current buffer
-    autocmd FileType cs nnoremap <leader>fm :OmniSharpFindMembers<CR>
-    autocmd FileType cs nnoremap <leader>tt :OmniSharpTypeLookup<CR>
-    autocmd FileType cs nnoremap <leader>dc :OmniSharpDocumentation<CR>
-augroup END
-"set cmdheight=1 " Remove 'Press Enter to continue' message when type information is longer than one line.
-" Force OmniSharp to reload the solution. Useful when switching branches etc.
-nnoremap <leader>cf :OmniSharpCodeFormat<CR>
-" Enable snippet completion, requires completeopt-=preview
-"let g:OmniSharp_want_snippet=1
 
 " indentLine
 let g:indentLine_faster = 1
@@ -247,6 +209,7 @@ set list " Enable rendering of listchars in place of their corresponding invisib
 set nowrap " Don't wrap long lines (zH and zL to move horizontally)
 set showbreak=↪\  " The characters to display at the start of the new line when wrapping
 set mouse=a " Enable mouse-usage in all modes
+set lazyredraw " Do not redraw between every action when executing macros or other non-typed commands
 
 " Misc
 set scrolloff=4 " Ensure that we never scroll to the last line visible onscreen
@@ -317,13 +280,12 @@ if !has('nvim')
     set incsearch " Highlight a search match as the search term is being entered
     set hlsearch " Highlight all search results. enter :noh to clear highlight
     set ttyfast " Send more characters to be drawn because we have a fast tty connection. Renders faster
-
-    " Allow backspace to remove newline and auto-indent whitespace
-    set backspace=indent,eol,start "Equivalent to: set backspace=2
+    set backspace=indent,eol,start " Allow backspace to remove newline and auto-indent whitespace. Equivalent to: set backspace=2
     set smarttab " Backspace removes <shiftwidth>-many characters
 endif
 
-" TODO
+" File-type-specific settings overrides
+autocmd FileType gitcommit setlocal spell
 autocmd FileType javascript setlocal shiftwidth=2 tabstop=2
-nnoremap <C-c> :!dotnet build<CR>
+autocmd FileType markdown setlocal wrap spell
 
