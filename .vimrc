@@ -18,7 +18,6 @@ else
 endif
 Plug 'airblade/vim-gitgutter' " Show a gutter with git changes next to the line numbers
 Plug 'alvan/vim-closetag' " HTML & XML tag auto-closing
-Plug 'ctrlpvim/ctrlp.vim' " Fuzzy-find files and buffers
 Plug 'elzr/vim-json' " Better JSON highlighting
 Plug 'fatih/vim-go' " Golang development helper (highlighting, formatting, source navigation etc)
 Plug 'godlygeek/tabular' " Formatting text into tables easily
@@ -26,12 +25,13 @@ Plug 'google/vim-searchindex' " Show a count of the total and current results (e
 Plug 'itchyny/lightline.vim' " A nicer status bar, colour-coded by mode
 Plug 'jiangmiao/auto-pairs' " Insert & delete pairs of characters in pairs (brackets, quotes etc)
 Plug 'junegunn/gv.vim'
+Plug 'junegunn/fzf'
+Plug 'junegunn/fzf.vim'
 Plug 'justinmk/vim-sneak' " Adds a more powerful f/t-style command that jumps to the next instance of a 2-character sequence
 Plug 'machakann/vim-highlightedyank' " Temporarily highlight the yanked text when yanking
 Plug 'majutsushi/tagbar'
-" TODO: This currently has a bug whereby the warning icons don't go away after I fix the warnings Plug 'maximbaz/lightline-ale'
+Plug 'maximbaz/lightline-ale' " Show ALE stats on the status line
 Plug 'OrangeT/vim-csharp'
-Plug 'rr-/vim-hexdec' " Convert numbers between decimal and hexadecimal inside vim
 Plug 'rust-lang/rust.vim' " Highlighting, formatting and filetype for the Rust language
 Plug 'scrooloose/nerdtree' " A better file explorer within vim
 " TODO: Get this running once we have autocomplete Plug 'shougo/echodoc.vim' " Display function signatures from completions on the command line.
@@ -116,7 +116,8 @@ endif
 "ALE
 let g:ale_linters = {
             \ 'javascript': ['eslint'],
-            \ 'html': []
+            \ 'html': [],
+            \ 'cpp': ['clangcheck']
             \ }
 let g:ale_echo_msg_format = '[%severity%-%linter%] %s'
 let g:ale_sign_error = 'X'
@@ -151,16 +152,37 @@ let g:lightline = {
     \   'linter_ok': 'lightline#ale#ok',
     \ },
     \ }
-" TODO: Fix this so that the ALE stats update as we fix the linter errors. The _linter* options above are all just there fore ALE stats, without lightline-ale they're not doing anything. They should be removed or fixed.
-" let g:lightline.active.right = { 'right': [  [ 'lineinfo' ], [ 'percent' ], [ 'fileformat', 'fileencoding', 'filetype' ], [ 'linter_checking', 'linter_errors', 'linter_warnings', 'linter_ok' ]], }
+let g:lightline.active = { 'right': [[ 'lineinfo' ], [ 'percent' ], [ 'fileformat', 'fileencoding', 'filetype' ], [ 'linter_checking', 'linter_errors', 'linter_warnings']], }
 
 " vim-gitgutter
 let g:gitgutter_map_keys = 0
 
-" CtrlP
-let g:ctrlp_user_command='rg --maxdepth 10 -F --files %s'
-let g:ctrlp_use_caching=0
-let g:ctrlp_map = '<c-p>'
+" FZF
+let g:fzf_action = {
+    \ 'ctrl-s': 'split',
+    \ 'ctrl-v': 'vsplit'
+    \ }
+let g:fzf_layout = { 'down': '~25%' }
+
+autocmd! FileType fzf set laststatus=0 noshowmode noruler | autocmd BufLeave <buffer> set laststatus=2 showmode ruler
+if executable('rg')
+    command! -bang -nargs=? -complete=dir FZFRipgrepFiles call fzf#vim#files(<q-args>, {'source': 'rg -F --files --smart-case', 'options': ['--info=inline']}, <bang>0)
+endif
+nnoremap <C-p> :FZFRipgrepFiles<CR>
+let g:fzf_colors =
+\ { 'fg':      ['fg', 'Normal'],
+  \ 'bg':      ['bg', 'Normal'],
+  \ 'hl':      ['fg', 'Statement'],
+  \ 'fg+':     ['fg', 'CursorLine', 'CursorColumn', 'Normal'],
+  \ 'bg+':     ['bg', 'CursorLine', 'CursorColumn'],
+  \ 'hl+':     ['fg', 'Statement'],
+  \ 'info':    ['fg', 'Comment'],
+  \ 'border':  ['fg', 'Ignore'],
+  \ 'prompt':  ['fg', 'Conditional'],
+  \ 'pointer': ['fg', 'Exception'],
+  \ 'marker':  ['fg', 'Keyword'],
+  \ 'spinner': ['fg', 'Label'],
+  \ 'header':  ['fg', 'Comment'] }
 
 " highlighted yank
 if !has('nvim')
@@ -224,6 +246,7 @@ set scrolloff=4 " Ensure that we never scroll to the last line visible onscreen
 set sidescroll=1 " Scroll sideways by only 1 column at a time when the cursor moves to close to the edge of the screen
 set sidescrolloff=4 " Ensure that we never scroll to the last column visible onscreen
 set spell " Enable spellcheck
+set spelllang=en_gb " Use Real English :)
 
 " Split Setup
 nnoremap <C-j> <C-w>j
