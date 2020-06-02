@@ -25,16 +25,20 @@ Plug 'google/vim-searchindex' " Show a count of the total and current results (e
 Plug 'itchyny/lightline.vim' " A nicer status bar, colour-coded by mode
 Plug 'jiangmiao/auto-pairs' " Insert & delete pairs of characters in pairs (brackets, quotes etc)
 Plug 'junegunn/gv.vim'
-Plug 'junegunn/fzf'
-Plug 'junegunn/fzf.vim'
+Plug 'junegunn/fzf' " General purpose fuzzy-finder, for use to open files. Required for fzf.vim
+Plug 'junegunn/fzf.vim' " Vim integration for fzf
 Plug 'justinmk/vim-sneak' " Adds a more powerful f/t-style command that jumps to the next instance of a 2-character sequence
 Plug 'machakann/vim-highlightedyank' " Temporarily highlight the yanked text when yanking
 Plug 'majutsushi/tagbar'
 Plug 'maximbaz/lightline-ale' " Show ALE stats on the status line
-Plug 'OrangeT/vim-csharp'
+Plug 'prabirshrestha/async.vim' " Async job handling, used by asyncomplete, not used directly
+Plug 'prabirshrestha/vim-lsp' " A language server protocol client. Used for linting and autocomplete
+Plug 'prabirshrestha/asyncomplete.vim' " Async autocompletion with pluggable sources
+Plug 'prabirshrestha/asyncomplete-buffer.vim' " Asyncomplete source that reads from the current buffer
+Plug 'prabirshrestha/asyncomplete-file.vim' " Asyncomplete source that reads file names from disk
+Plug 'prabirshrestha/asyncomplete-lsp.vim' " Asyncomplete source that uses a language server to provide intelligent completions
 Plug 'rust-lang/rust.vim' " Highlighting, formatting and filetype for the Rust language
 Plug 'scrooloose/nerdtree' " A better file explorer within vim
-" TODO: Get this running once we have autocomplete Plug 'shougo/echodoc.vim' " Display function signatures from completions on the command line.
 Plug 'tikhomirov/vim-glsl' " Syntax highlighting for GLSL
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-dispatch' " Asynchronous task execution in vim
@@ -54,22 +58,14 @@ Plug 'Yggdroot/indentLine' " Show indent guides (e.g a pipe every 4 consecutive 
 Plug 'ziglang/zig.vim' " Auto-formatting, syntax highlighting etc for the Zig language
 
 if has('nvim')
-    "Plug 'roxma/nvim-yarp' | Plug 'ncm2/ncm2' " TODO: Get this working?
-    "Plug 'ncm2/ncm2-path'
-    "Plug 'ncm2/ncm2-snippet' " TODO
-    "Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
-    Plug 'prabirshrestha/asyncomplete.vim'
-
     " GUI
     " TODO:
     " https://github.com/equalsraf/neovim-qt/wiki
     " https://github.com/equalsraf/neovim-qt/issues/506
     " :h nvim-gui-shim
-    "Plug 'equalsraf/neovim-gui-shim' " Necessary for neovim-qt to understand configuration from this file
-    "GuiTabline 0
-    "GuiPopupMenu 0
-else
-    "Plug 'Shougo/neocomplete.vim'
+    Plug 'equalsraf/neovim-gui-shim' " Necessary for neovim-qt to understand configuration from this file
+    GuiTabline 0
+    GuiPopupMenu 0
 endif
 
 Plug 'tomasr/molokai'
@@ -80,51 +76,74 @@ filetype plugin indent on
 
 " Plugin settings
 
-if has('nvim')
-    " deoplete
-    let g:deoplete#enable_at_startup = 1
-else
-    " NeoComplete
-    let g:neocomplete#enable_at_startup = 1
-    let g:neocomplete#enable_smart_case = 1
-    let g:neocomplete#enable_auto_delimiter = 1 " Auto-insert delimiters, such as / for filenames
-    let g:neocomplete#enable_camel_case = 1
-    let g:neocomplete#sources#syntax#min_keyword_length = 3
-    let g:neocomplete#lock_buffer_name_patter = '\*ku\*'
-    inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
-    inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
-    inoremap <expr><C-h> neocomplete#smart_close_popup()."\<C-h>"
-    inoremap <expr><BS> neocomplete#smart_close_popup()."\<C-h>"
-    inoremap <expr><C-y> neocomplete#smart_close_popup()."\<C-h>"
-    inoremap <expr><C-e> neocomplete#smart_close_popup()."\<C-h>"
-    inoremap <expr><Space> pumvisible() ? neocomplete#close_popup() : "\<Space>"
-    autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
-    autocmd FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
-    autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
-    autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
-    autocmd FileType xml setlocal omnifunc=xmlcomplete#CompleteTags
-    if !exists('g:neocomplete#sources#omni#input_patterns')
-        let g:neocomplete#sources#omni#input_patterns = {}
-    endif
-    let g:neocomplete#sources#omni#input_patterns.cs = '.*[^=\);]'
-    let g:neocomplete#sources#omni#input_patterns.c =
-          \ '[^.[:digit:] *\t]\%(\.\|->\)\w*'
-    let g:neocomplete#sources#omni#input_patterns.cpp =
-          \ '[^.[:digit:] *\t]\%(\.\|->\)\w*\|\h\w*::\w*'
-endif
+" Asyncomplete
+function! s:check_back_space() abort
+	let col = col('.') - 1
+	return !col || getline('.')[col - 1]  =~ '\s'
+endfunction
+
+inoremap <expr> <TAB> pumvisible() ? "\<C-n>" : <SID>check_back_space() ? "\<TAB>" : asyncomplete#force_refresh()
+inoremap <expr> <S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
+inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<CR>"
+imap <C-SPACE> <Plug>(asyncomplete_force_refresh)
+
+autocmd User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#file#get_source_options({
+    \ 'name': 'file',
+    \ 'whitelist': ['*'],
+    \ 'priority': 10,
+    \ 'completeor': function('asyncomplete#sources#file#completor')
+    \ }))
+autocmd User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#buffer#get_source_options({
+    \ 'name': 'buffer',
+    \ 'whitelist': ['*'],
+    \ 'blacklist': ['go'],
+    \ 'completor': function('asyncomplete#sources#buffer#completor'),
+    \ }))
 
 "ALE
-let g:ale_linters = {
-            \ 'javascript': ['eslint'],
-            \ 'html': [],
-            \ 'cpp': ['clangcheck']
-            \ }
-let g:ale_echo_msg_format = '[%severity%-%linter%] %s'
-let g:ale_sign_error = 'X'
-let g:ale_sign_warning = '!'
-let g:ale_sign_info = 'i'
-nnoremap gln :ALENext<CR>
-nnoremap glp :ALEPrevious<CR>
+" let g:ale_linters = {
+"             \ 'javascript': ['eslint'],
+"             \ 'html': [],
+"             \ 'cpp': ['clangd', 'clang-format']
+"             \ }
+" let g:ale_echo_msg_format = '[%severity%-%linter%] %s'
+" let g:ale_sign_error = 'X'
+" let g:ale_sign_warning = '!'
+" let g:ale_sign_info = 'i'
+" nnoremap gln :ALENextWrap<CR>
+" nnoremap glp :ALEPreviousWrap<CR>
+
+" vim-lsp
+let g:lsp_signs_enabled = 1
+let g:lsp_diagnostics_echo_cursor = 1
+let g:lsp_signs_error = {'text': '✗'}
+let g:lsp_signs_warning = {'text': '‼'}
+let g:lsp_signs_hint = {'text': '?'}
+if executable('clangd')
+    " TODO: Add --clang-tidy to arguments? Possibly some clang-tidy-checks=foo?
+    autocmd User lsp_setup call lsp#register_server({
+        \ 'name': 'clangd',
+        \ 'cmd': {server_info->['clangd']},
+        \ 'whitelist': ['c', 'cpp', 'objc', 'objcpp'],
+        \ })
+    autocmd FileType c setlocal omnifunc=lsp#complete
+    autocmd FileType cpp setlocal omnifunc=lsp#complete
+    autocmd FileType objc setlocal omnifunc=lsp#complete
+    autocmd FileType objcpp setlocal omnifunc=lsp#complete
+endif
+
+nnoremap <silent> gd :LspDefinition<CR>
+nnoremap <silent> gi :LspImplementation<CR>
+" TODO: Would be awesome if we could get this: nnoremap <silent> gs :CocCommand clangd.switchSourceHeader<CR>
+" TODO: Does it auto-insert delimiters? E.g / for filenames (if the dir is foobar/baz then I want to type foo<tab>baz and have it insert the "bar/")
+" TODO: Can we configure a min keyword length? We used to use 3
+nnoremap <silent> gln :LspNextDiagnostic<CR>
+nnoremap <silent> glp :LspPreviousDiagnostic<CR>
+
+" TODO: Status-line diagnostic counts, see source for lightline-ale (its very simple)
+" (autocmd/event:) lsp_diagnostics_updated               |lsp_diagnostics_updated|
+" lsp#get_buffer_diagnostics_counts()    *lsp#get_buffer_diagnostics_counts()*
+" Returns dictionary with keys "error", "warning", "information", "hint".
 
 " indentLine
 let g:indentLine_faster = 1
@@ -140,19 +159,21 @@ let g:AutoPairsCenterLine = 0
 let g:lightline = {
     \ 'colorscheme': 'powerline',
     \ 'component_type': {
-    \   'linter_checking': 'left',
+    \   'linter_checking': 'right',
+    \   'linter_infos': 'right',
     \   'linter_warnings': 'warning',
     \   'linter_errors': 'error',
-    \   'linter_ok': 'left',
+    \   'linter_ok': 'right',
     \ },
     \ 'component_expand': {
     \   'linter_checking': 'lightline#ale#checking',
+    \   'linter_infos': 'lightline#ale#infos',
     \   'linter_warnings': 'lightline#ale#warnings',
     \   'linter_errors': 'lightline#ale#errors',
     \   'linter_ok': 'lightline#ale#ok',
     \ },
     \ }
-let g:lightline.active = { 'right': [[ 'lineinfo' ], [ 'percent' ], [ 'fileformat', 'fileencoding', 'filetype' ], [ 'linter_checking', 'linter_errors', 'linter_warnings']], }
+let g:lightline.active = { 'right': [[ 'lineinfo' ], [ 'percent' ], [ 'fileformat', 'fileencoding', 'filetype' ], [ 'linter_checking', 'linter_errors', 'linter_warnings', 'linter_infos']], }
 
 " vim-gitgutter
 let g:gitgutter_map_keys = 0
@@ -166,7 +187,11 @@ let g:fzf_layout = { 'down': '~25%' }
 
 autocmd! FileType fzf set laststatus=0 noshowmode noruler | autocmd BufLeave <buffer> set laststatus=2 showmode ruler
 if executable('rg')
-    command! -bang -nargs=? -complete=dir FZFRipgrepFiles call fzf#vim#files(<q-args>, {'source': 'rg -F --files --smart-case', 'options': ['--info=inline']}, <bang>0)
+    command! -bang -nargs=? -complete=dir FZFRipgrepFiles
+    \   call fzf#vim#files(<q-args>, {
+    \   'source': 'rg -F --files --smart-case',
+    \   'options': ['--info=inline']
+    \}, <bang>0)
 endif
 nnoremap <C-p> :FZFRipgrepFiles<CR>
 let g:fzf_colors =
