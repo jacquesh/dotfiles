@@ -1,21 +1,20 @@
-" Fix the path so that we can find ~/.vim on windows, by default the runtime path only includes ~/vimfiles, so it doesn't find plugins
+" Fix the path so that we can find ~/.vim, ~/.config/nvim, or whatever our working directory is on windows,
+" by default the runtime path only includes ~/vimfiles, so it doesn't find plugins
 if has('win32') || has('win64')
     if has('nvim')
-        set runtimepath=$HOME/.config/nvim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,$HOME/.config/nvim/after
+        let $WORKINGDIR=$HOME . "/.config/nvim"
     else
-        set runtimepath=$HOME/.vim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,$HOME/.vim/after
+        let $WORKINGDIR=$HOME . "/.config/vim"
     endif
+
+    set runtimepath=$WORKINGDIR,$VIMRUNTIME,$WORKINGDIR/after
 endif
 
 " =======
 " Plugins
 " =======
 
-if has('nvim')
-    call plug#begin('~/.config/nvim/plugged')
-else
-    call plug#begin('~/.vim/plugged')
-endif
+call plug#begin($WORKINGDIR . '/plugged')
 Plug 'airblade/vim-gitgutter' " Show a gutter with git changes next to the line numbers
 Plug 'alvan/vim-closetag' " HTML & XML tag auto-closing
 Plug 'elzr/vim-json' " Better JSON highlighting
@@ -304,18 +303,18 @@ if has('nvim')
 endif
 
 " Persistent Undo
-set undodir^=~/.vim/undo// " Write undo files to a specific directory by default. The trailing // instructs vim to use each file's full path in the undo dir (to prevent ambiguity between files with the same name in different directories). The ^= prepends the value.
+set undodir^=$WORKINGDIR/undo// " Write undo files to a specific directory by default. The trailing // instructs vim to use each file's full path in the undo dir (to prevent ambiguity between files with the same name in different directories). The ^= prepends the value.
 set undofile " Persist undo history to disk when writing a buffer to a file (allows you to close and re-open a file and keep the undo history)
 set undolevels=1000 " The maximum number of changes that can be undone at one time
 set undoreload=10000 " Save the whole buffer for undo when reloading it if the number of lines in the buffer is less than this option's value
 
 " Swap files
-set directory^=~/.vim/swap// " Write swap files to a specific directory by default
+set directory^=$WORKINGDIR/swap// " Write swap files to a specific directory by default
 set swapfile " Write swap files for each buffer, which protects against crash/power loss between writes
 
 " Backups
 set backupcopy=auto " Use whatever the platform-specific best scheme is for making and using backup files
-set backupdir^=~/.vim/backup// " Write backups to a specific directory by default
+set backupdir^=$WORKINGDIR/backup// " Write backups to a specific directory by default
 set nobackup " Do not persist backup files after a successful write
 set writebackup " Make a backup before overwriting a file that is removed after successful write. Prevents data loss if we crash during a write
 
