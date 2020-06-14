@@ -29,7 +29,6 @@ Plug 'junegunn/fzf.vim' " Vim integration for fzf
 Plug 'justinmk/vim-sneak' " Adds a more powerful f/t-style command that jumps to the next instance of a 2-character sequence
 Plug 'machakann/vim-highlightedyank' " Temporarily highlight the yanked text when yanking
 Plug 'majutsushi/tagbar'
-Plug 'maximbaz/lightline-ale' " Show ALE stats on the status line
 Plug 'prabirshrestha/async.vim' " Async job handling, used by asyncomplete, not used directly
 Plug 'prabirshrestha/vim-lsp' " A language server protocol client. Used for linting and autocomplete
 Plug 'prabirshrestha/asyncomplete.vim' " Async autocompletion with pluggable sources
@@ -52,7 +51,6 @@ Plug 'tpope/vim-vinegar'
 Plug 'vim-scripts/CursorLineCurrentWindow' " Toggles highlighting of the cursor line so it is only active on the focussed buffer
 Plug 'vim-scripts/Gundo'
 Plug 'vimwiki/vimwiki' " An easy-to-use wiki from the comfort of your own editor
-Plug 'w0rp/ale' " Asynchronous Linting Engine
 Plug 'Yggdroot/indentLine' " Show indent guides (e.g a pipe every 4 consecutive spaces)
 Plug 'ziglang/zig.vim' " Auto-formatting, syntax highlighting etc for the Zig language
 
@@ -99,19 +97,6 @@ autocmd User asyncomplete_setup call asyncomplete#register_source(asyncomplete#s
     \ 'completor': function('asyncomplete#sources#buffer#completor'),
     \ }))
 
-"ALE
-" let g:ale_linters = {
-"             \ 'javascript': ['eslint'],
-"             \ 'html': [],
-"             \ 'cpp': ['clangd', 'clang-format']
-"             \ }
-" let g:ale_echo_msg_format = '[%severity%-%linter%] %s'
-" let g:ale_sign_error = 'X'
-" let g:ale_sign_warning = '!'
-" let g:ale_sign_info = 'i'
-" nnoremap gln :ALENextWrap<CR>
-" nnoremap glp :ALEPreviousWrap<CR>
-
 " vim-lsp
 let g:lsp_signs_enabled = 1
 let g:lsp_diagnostics_echo_cursor = 1
@@ -139,10 +124,8 @@ nnoremap <silent> gi :LspImplementation<CR>
 nnoremap <silent> gln :LspNextDiagnostic<CR>
 nnoremap <silent> glp :LspPreviousDiagnostic<CR>
 
-" TODO: Status-line diagnostic counts, see source for lightline-ale (its very simple)
-" (autocmd/event:) lsp_diagnostics_updated               |lsp_diagnostics_updated|
-" lsp#get_buffer_diagnostics_counts()    *lsp#get_buffer_diagnostics_counts()*
-" Returns dictionary with keys "error", "warning", "information", "hint".
+" TODO: We can also call #lsp#get_buffer_first_error_line() to go to the first error (possibly better than just going to the next error)
+autocmd User lsp_diagnostics_updated call lightline#update()
 
 " indentLine
 let g:indentLine_faster = 1
@@ -155,24 +138,44 @@ let g:AutoPairsMultilineClose = 0
 let g:AutoPairsCenterLine = 0
 
 " lightline
+function! Lightline_lsp_infos() abort
+    let l:counts = lsp#get_buffer_diagnostics_counts()
+    return l:counts.information == 0 ? '' : printf('I: %d', counts.information)
+endfunction
+
+function! Lightline_lsp_warnings() abort
+    let l:counts = lsp#get_buffer_diagnostics_counts()
+    return l:counts.warning == 0 ? '' : printf('W: %d', counts.warning)
+endfunction
+
+function! Lightline_lsp_errors() abort
+    let l:counts = lsp#get_buffer_diagnostics_counts()
+    return l:counts.error == 0 ? '' : printf('E: %d', counts.error)
+endfunction
+
 let g:lightline = {
     \ 'colorscheme': 'powerline',
     \ 'component_type': {
-    \   'linter_checking': 'right',
     \   'linter_infos': 'right',
     \   'linter_warnings': 'warning',
     \   'linter_errors': 'error',
-    \   'linter_ok': 'right',
     \ },
     \ 'component_expand': {
-    \   'linter_checking': 'lightline#ale#checking',
-    \   'linter_infos': 'lightline#ale#infos',
-    \   'linter_warnings': 'lightline#ale#warnings',
-    \   'linter_errors': 'lightline#ale#errors',
-    \   'linter_ok': 'lightline#ale#ok',
+    \   'linter_infos': 'Lightline_lsp_infos',
+    \   'linter_warnings': 'Lightline_lsp_warnings',
+    \   'linter_errors': 'Lightline_lsp_errors',
+    \ },
+    \ 'active': {
+    \   'left': [ [ 'mode', 'paste' ],
+    \             [ 'filename', 'readonly', 'modified' ],
+    \           ],
+    \   'right': [ [ 'lineinfo' ],
+    \              [ 'percent' ],
+    \              [ 'fileformat', 'fileencoding', 'filetype' ],
+    \              [ 'linter_errors', 'linter_warnings', 'linter_infos' ],
+    \            ],
     \ },
     \ }
-let g:lightline.active = { 'right': [[ 'lineinfo' ], [ 'percent' ], [ 'fileformat', 'fileencoding', 'filetype' ], [ 'linter_checking', 'linter_errors', 'linter_warnings', 'linter_infos']], }
 
 " vim-gitgutter
 let g:gitgutter_map_keys = 0
