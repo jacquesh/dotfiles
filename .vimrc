@@ -28,8 +28,6 @@ Plug 'junegunn/fzf' " General purpose fuzzy-finder, for use to open files. Requi
 Plug 'junegunn/fzf.vim' " Vim integration for fzf
 Plug 'justinmk/vim-sneak' " Adds a more powerful f/t-style command that jumps to the next instance of a 2-character sequence
 Plug 'machakann/vim-highlightedyank' " Temporarily highlight the yanked text when yanking
-Plug 'majutsushi/tagbar'
-Plug 'prabirshrestha/async.vim' " Async job handling, used by asyncomplete, not used directly
 Plug 'prabirshrestha/vim-lsp' " A language server protocol client. Used for linting and autocomplete
 Plug 'prabirshrestha/asyncomplete.vim' " Async autocompletion with pluggable sources
 Plug 'prabirshrestha/asyncomplete-buffer.vim' " Asyncomplete source that reads from the current buffer
@@ -39,7 +37,6 @@ Plug 'rust-lang/rust.vim' " Highlighting, formatting and filetype for the Rust l
 Plug 'scrooloose/nerdtree' " A better file explorer within vim
 Plug 'tikhomirov/vim-glsl' " Syntax highlighting for GLSL
 Plug 'tpope/vim-commentary'
-Plug 'tpope/vim-dispatch' " Asynchronous task execution in vim
 Plug 'tpope/vim-eunuch'
 Plug 'tpope/vim-fugitive' " Wrapper for many git commands (commit, browse, blame etc)
 Plug 'tpope/vim-repeat' " Extend the . operator to support actions provided by certain plugins
@@ -47,7 +44,6 @@ if !has('nvim')
     Plug 'tpope/vim-sensible' " Set a bunch of options to better default values. Unnecessary in neovim (this is built-in there)
 endif
 Plug 'tpope/vim-surround' " Add a 'surround' noun so that you can refer to surrounding quotes, braces, XML tags etc
-Plug 'tpope/vim-vinegar'
 Plug 'vim-scripts/CursorLineCurrentWindow' " Toggles highlighting of the cursor line so it is only active on the focussed buffer
 Plug 'vim-scripts/Gundo'
 Plug 'vimwiki/vimwiki' " An easy-to-use wiki from the comfort of your own editor
@@ -56,13 +52,14 @@ Plug 'ziglang/zig.vim' " Auto-formatting, syntax highlighting etc for the Zig la
 
 if has('nvim')
     " GUI
-    " TODO:
     " https://github.com/equalsraf/neovim-qt/wiki
-    " https://github.com/equalsraf/neovim-qt/issues/506
-    " :h nvim-gui-shim
     Plug 'equalsraf/neovim-gui-shim' " Necessary for neovim-qt to understand configuration from this file
-    GuiTabline 0
-    GuiPopupMenu 0
+    function! s:init_gui()
+        call GuiFont("Consolas:h12")
+        GuiTabline 0
+        GuiPopupMenu 0
+    endfunction
+    autocmd UIEnter * call <SID>init_gui()
 endif
 
 Plug 'tomasr/molokai'
@@ -79,9 +76,34 @@ function! s:check_back_space() abort
 	return !col || getline('.')[col - 1]  =~ '\s'
 endfunction
 
-inoremap <expr> <TAB> pumvisible() ? "\<C-n>" : <SID>check_back_space() ? "\<TAB>" : asyncomplete#force_refresh()
+" TODO: Experimental code (copied as-is from asyncomplete help) for sorting
+"       suggestions by completion source priority
+function! s:sort_by_priority_preprocessor(options, matches) abort
+  let l:items = []
+  for [l:source_name, l:matches] in items(a:matches)
+    for l:item in l:matches['items']
+      if stridx(l:item['word'], a:options['base']) == 0
+        let l:item['priority'] =
+            \ get(asyncomplete#get_source_info(l:source_name),'priority',0)
+        call add(l:items, l:item)
+      endif
+    endfor
+  endfor
+
+  let l:items = sort(l:items, {a, b -> b['priority'] - a['priority']})
+
+  call asyncomplete#preprocess_complete(a:options, l:items)
+endfunction
+
+let g:asyncomplete_preprocessor = [function('s:sort_by_priority_preprocessor')]
+
+" NOTE: We don't want the popup menu to interact with <CR> at all, so if we hit CR
+" while its open then accept whatever the current completion is and do the CR.
+inoremap <expr> <CR> pumvisible() ? asyncomplete#close_popup() . "\<CR>" : "\<CR>"
+
+" inoremap <expr> <TAB> pumvisible() ? "\<C-n>" : <SID>check_back_space() ? "\<TAB>" : asyncomplete#force_refresh()
+inoremap <expr> <TAB> pumvisible() ? "\<C-n>" : "\<TAB>"
 inoremap <expr> <S-TAB> pumvisible() ? "\<C-p>" : "\<S-TAB>"
-inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<CR>"
 imap <C-SPACE> <Plug>(asyncomplete_force_refresh)
 
 autocmd User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#file#get_source_options({
@@ -104,11 +126,11 @@ let g:lsp_signs_error = {'text': '✗'}
 let g:lsp_signs_warning = {'text': '‼'}
 let g:lsp_signs_hint = {'text': '?'}
 if executable('clangd')
-    " TODO: Add --clang-tidy to arguments? Possibly some clang-tidy-checks=foo?
     autocmd User lsp_setup call lsp#register_server({
         \ 'name': 'clangd',
-        \ 'cmd': {server_info->['clangd']},
+        \ 'cmd': {server_info->['clangd', '--clang-tidy', '--function-arg-placeholders', '--header-insertion=never']},
         \ 'whitelist': ['c', 'cpp', 'objc', 'objcpp'],
+        \ 'priority': 20,
         \ })
     autocmd FileType c setlocal omnifunc=lsp#complete
     autocmd FileType cpp setlocal omnifunc=lsp#complete
@@ -236,6 +258,7 @@ let NERDTreeDirArrowCollapsible = "▼"
 syntax enable " Enable vim's syntax highlighting
 colorscheme onedark
 set t_Co=256
+set synmaxcol=200 " Disable all syntax highlighting for columns beyond this one (greatly speeds up vim's rendering on very long lines)
 
 " Indentation
 set cindent " Use C-style indentation rules TODO: Configure this properly
@@ -263,6 +286,7 @@ set showbreak=↪\  " The characters to display at the start of the new line whe
 " Misc
 if has('nvim')
     set clipboard=unnamedplus " Yank/Put with the unnamed (system) register by default
+    set title " Show the current file path in the window title (if any)
 else
     set clipboard=unnamed " Yank/Put with the unnamed (system) register by default
 endif
@@ -274,29 +298,6 @@ set sidescroll=1 " Scroll sideways by only 1 column at a time when the cursor mo
 set sidescrolloff=4 " Ensure that we never scroll to the last column visible onscreen
 set spell " Enable spellcheck
 set spelllang=en_gb " Use Real English :)
-
-" Split Setup
-nnoremap <C-j> <C-w>j
-nnoremap <C-k> <C-w>k
-nnoremap <C-h> <C-w>h
-nnoremap <C-l> <C-w>l
-set splitright " Make new vertical splits appear to the right the current one
-set splitbelow " Make new horizontal splits appear below the current one
-
-" Better indenting in visual mode
-vnoremap <tab> > gv
-vnoremap <S-tab> < gv
-
-" More intuitive vertical movement on wrapped lines.
-" Without this, j & k ignore wrapped text and move the cursor in actual lines rather than visible lines.
-nmap j gj
-nmap k gk
-
-" Learn to stop using arrow keys to move around
-nnoremap <Left> :echoe "Use h"<CR>
-nnoremap <Right> :echoe "Use l"<CR>
-nnoremap <Up> :echoe "Use k"<CR>
-nnoremap <Down> :echoe "Use j"<CR>
 
 " Search
 set ignorecase  " Ignore case in search strings
@@ -336,6 +337,34 @@ endif
 
 " File-type-specific settings overrides
 autocmd FileType gitcommit setlocal spell
-autocmd FileType javascript setlocal shiftwidth=2 tabstop=2
+autocmd FileType javascript,html,css setlocal shiftwidth=2 tabstop=2
 autocmd FileType markdown setlocal wrap spell
+
+" =========================
+" Custom key bindings
+" =========================
+" TODO: Should we move key bindings for plugins down here from the plugin section?
+
+" Split Setup
+nnoremap <C-j> <C-w>j
+nnoremap <C-k> <C-w>k
+nnoremap <C-h> <C-w>h
+nnoremap <C-l> <C-w>l
+set splitright " Make new vertical splits appear to the right the current one
+set splitbelow " Make new horizontal splits appear below the current one
+
+" Better indenting in visual mode
+vnoremap <tab> > gv
+vnoremap <S-tab> < gv
+
+" More intuitive vertical movement on wrapped lines.
+" Without this, j & k ignore wrapped text and move the cursor in actual lines rather than visible lines.
+nmap j gj
+nmap k gk
+
+" Learn to stop using arrow keys to move around
+nnoremap <Left> :echoe "Use h"<CR>
+nnoremap <Right> :echoe "Use l"<CR>
+nnoremap <Up> :echoe "Use k"<CR>
+nnoremap <Down> :echoe "Use j"<CR>
 
