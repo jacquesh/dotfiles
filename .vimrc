@@ -44,6 +44,7 @@ if !has('nvim')
     Plug 'tpope/vim-sensible' " Set a bunch of options to better default values. Unnecessary in neovim (this is built-in there)
 endif
 Plug 'tpope/vim-surround' " Add a 'surround' noun so that you can refer to surrounding quotes, braces, XML tags etc
+Plug 'vim-scripts/a.vim' " TODO: Does this help? " Add the notion of 'alternate files' to switch between (for example) source and header files
 Plug 'vim-scripts/CursorLineCurrentWindow' " Toggles highlighting of the cursor line so it is only active on the focussed buffer
 Plug 'vim-scripts/Gundo'
 Plug 'vimwiki/vimwiki' " An easy-to-use wiki from the comfort of your own editor
@@ -69,6 +70,12 @@ call plug#end()
 filetype plugin indent on
 
 " Plugin settings
+
+" a.vim
+let g:alternativeSearchPath = 'sfr:../source,sfr:../src,sfr:../include,sfr:../inc,wdr:source,wdr:src,wdr:include'
+nnoremap <leader>aa :A<CR>
+nnoremap <leader>as :AS<CR>
+nnoremap <leader>av :AV<CR>
 
 " Asyncomplete
 function! s:check_back_space() abort
