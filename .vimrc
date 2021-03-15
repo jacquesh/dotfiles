@@ -55,10 +55,13 @@ if has('nvim')
     " GUI
     " https://github.com/equalsraf/neovim-qt/wiki
     Plug 'equalsraf/neovim-gui-shim' " Necessary for neovim-qt to understand configuration from this file
+    Plug 'nvim-lua/popup.nvim'
+    Plug 'nvim-lua/plenary.nvim'
+    Plug 'nvim-telescope/telescope.nvim'
     function! s:init_gui()
         call GuiFont("Consolas:h12")
         GuiTabline 0
-        GuiPopupMenu 0
+        GuiPopupmenu 0
     endfunction
     autocmd UIEnter * call <SID>init_gui()
 endif
@@ -239,6 +242,28 @@ let g:fzf_colors =
   \ 'marker':  ['fg', 'Keyword'],
   \ 'spinner': ['fg', 'Label'],
   \ 'header':  ['fg', 'Comment'] }
+
+" Telescope
+if has('nvim')
+    nnoremap <C-p> <cmd>Telescope find_files<cr>
+    nnoremap <C-g> <cmd>Telescope live_grep<cr>
+lua <<EOF
+local actions = require('telescope.actions')
+require('telescope').setup {
+    defaults = {
+        -- These 3 previewer defaults are only necessary temporarily. Once https://github.com/nvim-telescope/telescope.nvim/pull/420 gets merged we can update Telescope and remove it.
+        file_previewer = require'telescope.previewers'.vim_buffer_cat.new,
+        grep_previewer = require'telescope.previewers'.vim_buffer_vimgrep.new,
+        qflist_previewer = require'telescope.previewers'.vim_buffer_qflist.new,
+        mappings = {
+            i = {
+                ["<esc>"] = actions.close
+            }
+        }
+    }
+}
+EOF
+endif
 
 " highlighted yank
 if !has('nvim')
