@@ -25,7 +25,6 @@ Plug 'jiangmiao/auto-pairs' " Insert & delete pairs of characters in pairs (brac
 Plug 'junegunn/gv.vim'
 Plug 'junegunn/fzf' " General purpose fuzzy-finder, for use to open files. Required for fzf.vim
 Plug 'junegunn/fzf.vim' " Vim integration for fzf
-Plug 'justinmk/vim-sneak' " Adds a more powerful f/t-style command that jumps to the next instance of a 2-character sequence
 Plug 'machakann/vim-highlightedyank' " Temporarily highlight the yanked text when yanking
 Plug 'mhinz/vim-signify' " Show gutter symbols for differences in source control (supports git, p4 and more)
 Plug 'prabirshrestha/vim-lsp' " A language server protocol client. Used for linting and autocomplete
