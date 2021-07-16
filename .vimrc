@@ -15,7 +15,6 @@ endif
 " =======
 
 call plug#begin($WORKINGDIR . '/plugged')
-Plug 'airblade/vim-gitgutter' " Show a gutter with git changes next to the line numbers
 Plug 'alvan/vim-closetag' " HTML & XML tag auto-closing
 Plug 'elzr/vim-json' " Better JSON highlighting
 Plug 'fatih/vim-go' " Golang development helper (highlighting, formatting, source navigation etc)
@@ -28,6 +27,7 @@ Plug 'junegunn/fzf' " General purpose fuzzy-finder, for use to open files. Requi
 Plug 'junegunn/fzf.vim' " Vim integration for fzf
 Plug 'justinmk/vim-sneak' " Adds a more powerful f/t-style command that jumps to the next instance of a 2-character sequence
 Plug 'machakann/vim-highlightedyank' " Temporarily highlight the yanked text when yanking
+Plug 'mhinz/vim-signify' " Show gutter symbols for differences in source control (supports git, p4 and more)
 Plug 'prabirshrestha/vim-lsp' " A language server protocol client. Used for linting and autocomplete
 Plug 'prabirshrestha/asyncomplete.vim' " Async autocompletion with pluggable sources
 Plug 'prabirshrestha/asyncomplete-buffer.vim' " Asyncomplete source that reads from the current buffer
@@ -208,9 +208,6 @@ let g:lightline = {
     \            ],
     \ },
     \ }
-
-" vim-gitgutter
-let g:gitgutter_map_keys = 0
 
 " FZF
 let g:fzf_action = {
