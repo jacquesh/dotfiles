@@ -35,15 +35,15 @@ Plug 'prabirshrestha/asyncomplete-lsp.vim' " Asyncomplete source that uses a lan
 Plug 'rust-lang/rust.vim' " Highlighting, formatting and filetype for the Rust language
 Plug 'scrooloose/nerdtree' " A better file explorer within vim
 Plug 'tikhomirov/vim-glsl' " Syntax highlighting for GLSL
-Plug 'tpope/vim-commentary'
-Plug 'tpope/vim-eunuch'
+Plug 'tpope/vim-commentary' " Provide an easy way of (un)commenting a single/selection/range of lines
+Plug 'tpope/vim-eunuch' " Add commands for several basic filesystem operations (Mkdir, Move, Delete, etc)
 Plug 'tpope/vim-fugitive' " Wrapper for many git commands (commit, browse, blame etc)
 Plug 'tpope/vim-repeat' " Extend the . operator to support actions provided by certain plugins
 if !has('nvim')
     Plug 'tpope/vim-sensible' " Set a bunch of options to better default values. Unnecessary in neovim (this is built-in there)
 endif
 Plug 'tpope/vim-surround' " Add a 'surround' noun so that you can refer to surrounding quotes, braces, XML tags etc
-Plug 'vim-scripts/a.vim' " TODO: Does this help? " Add the notion of 'alternate files' to switch between (for example) source and header files
+Plug 'vim-scripts/a.vim' " Add the notion of 'alternate files' to switch between (for example) source and header files
 Plug 'vim-scripts/CursorLineCurrentWindow' " Toggles highlighting of the cursor line so it is only active on the focussed buffer
 Plug 'vim-scripts/Gundo'
 Plug 'vimwiki/vimwiki' " An easy-to-use wiki from the comfort of your own editor
@@ -286,7 +286,7 @@ let NERDTreeDirArrowCollapsible = "▼"
 syntax enable " Enable vim's syntax highlighting
 colorscheme onedark
 set t_Co=256
-set synmaxcol=200 " Disable all syntax highlighting for columns beyond this one (greatly speeds up vim's rendering on very long lines)
+set synmaxcol=300 " Disable all syntax highlighting for columns beyond this one (greatly speeds up vim's rendering on very long lines)
 
 " Indentation
 set cindent " Use C-style indentation rules TODO: Configure this properly
