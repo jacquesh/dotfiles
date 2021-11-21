@@ -45,7 +45,6 @@ endif
 Plug 'tpope/vim-surround' " Add a 'surround' noun so that you can refer to surrounding quotes, braces, XML tags etc
 Plug 'vim-scripts/a.vim' " Add the notion of 'alternate files' to switch between (for example) source and header files
 Plug 'vim-scripts/CursorLineCurrentWindow' " Toggles highlighting of the cursor line so it is only active on the focussed buffer
-Plug 'vim-scripts/Gundo'
 Plug 'vimwiki/vimwiki' " An easy-to-use wiki from the comfort of your own editor
 Plug 'Yggdroot/indentLine' " Show indent guides (e.g a pipe every 4 consecutive spaces)
 Plug 'ziglang/zig.vim' " Auto-formatting, syntax highlighting etc for the Zig language
